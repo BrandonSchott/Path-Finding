@@ -10,42 +10,36 @@ public class CatGhostScript : MonoBehaviour
 
     RaycastHit hit;
 
-    public bool mouseFound, leftSideGood, rightSideGood, goodToTurn;
+    [SerializeField]
+    public bool mouseFound, clear, goodToTurn;
     // Start is called before the first frame update
     void Start()
     {
         mouseFound = false;
-        leftSideGood = false;
-        rightSideGood = false;
+        clear = false;
         goodToTurn = false;
     }
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
+        
         if (mouseFound)
         {
             transform.LookAt(mouse.transform);
-            //leftRay
-            if (Physics.Raycast(new Vector3(transform.position.x - 0.5f, transform.position.y, transform.position.z), transform.forward, out hit, 10.0f, 6))
+            
+            if (Physics.BoxCast(transform.position, new Vector3(1, 1, 1), transform.forward, out hit, new Quaternion(0, 0, 0, 0), 1))
             {
-                leftSideGood = false; 
+                //Debug.Log("Mouse Not Found");
+                clear = false;
             }
             else
             {
-                leftSideGood = true;
-            }
-            //rightRay
-            if (Physics.Raycast(new Vector3(transform.position.x + 0.5f, transform.position.y, transform.position.z), transform.forward, out hit, 10.0f, 6))
-            {
-                rightSideGood = false;
-            }
-            else
-            {
-                rightSideGood = true;
+                //Debug.Log("Mouse Found");
+                clear = true;
             }
 
-            if (rightSideGood && leftSideGood)
+            if (clear)
             {
                 goodToTurn = true;
             }
@@ -54,7 +48,6 @@ public class CatGhostScript : MonoBehaviour
                 goodToTurn = false;
             }
         }
-
     }
 
 }
