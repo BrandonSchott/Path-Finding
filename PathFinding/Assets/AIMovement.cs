@@ -11,6 +11,9 @@ public class AIMovement : MonoBehaviour
 
     RaycastHit wallHit;
 
+    float speedBoostStamp;
+
+    bool wallNotDetected;
     // Start is called before the first frame update
     void Start()
     {
@@ -22,54 +25,91 @@ public class AIMovement : MonoBehaviour
     {
         transform.Translate(Vector3.forward * Time.fixedDeltaTime * movementSpeed);
 
-        Collider[] detector = Physics.OverlapSphere(transform.position, 7);
+        if (Physics.Raycast(transform.position, transform.forward, out hit, 4))
+        {
+            if (hit.transform.tag == "Wall")
+            {
+                if (Physics.Raycast(transform.position, transform.forward, out hit, 5.0f))
+                {
+                    float angle = Vector3.SignedAngle(transform.forward, -hit.normal, Vector3.forward);
 
-        Transform closestMouse;
+                    transform.Rotate(0, angle, 0);
+                }
+                //transform.localPosition -= transform.forward;
+                if (Physics.Raycast(transform.position, transform.right, out hit, 5.0f))
+                {
+                    transform.Rotate(Vector3.up, -90);
+                }
+                else if (Physics.Raycast(transform.position, -transform.right, out hit, 5.0f))
+                {
+                    transform.Rotate(Vector3.up, 90);
+                }
+                else if (Random.Range(0, 2) == 0)
+                {
+                    transform.Rotate(Vector3.up, -90);
+                }
+                else
+                {
+                    transform.Rotate(Vector3.up, 90);
+                }
+            }
+        }
+
+        Collider[] detector = Physics.OverlapSphere(transform.position, 7);
 
         foreach (Collider col in detector)
         {
             if (col.transform.tag == "Mouse")
             {
-                bool wallDetected = true;
+                wallNotDetected = true;
                 if (Physics.Linecast(transform.position, col.transform.position, out wallHit))
                 {
                     if (wallHit.transform.tag == "Wall")
                     {
-                        wallDetected = false;
+                        wallNotDetected = false;
                     }
                 }
 
-                if (wallDetected)
+                if (wallNotDetected)
                 {
                     transform.LookAt(col.transform.position);
                 }
 
             }
-        }
-    }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.layer == 6)
+            if (col.transform.tag == "Speed")
+            {
+                if (Physics.Linecast(transform.position, col.transform.position, out wallHit))
+                {
+                    if (wallHit.transform.tag == "Wall")
+                    {
+                        wallNotDetected = false;
+                    }
+                    else
+                    {
+                        wallNotDetected = true;
+                    }
+                }
+                if (wallNotDetected)
+                {
+                    transform.LookAt(col.transform.position);
+                }
+            }
+
+        }
+        if (movementSpeed > 3 && Time.time > speedBoostStamp + 10)
         {
-            if (Physics.Raycast(transform.position, transform.forward, out hit, 5.0f))
-            {
-                float angle = Vector3.SignedAngle(transform.forward, -hit.normal, Vector3.forward);
-
-                transform.Rotate(0, angle, 0);
-            }
-            //transform.localPosition -= transform.forward;
-            if (Random.Range(0, 2) == 0)
-            {
-                transform.Rotate(Vector3.up, -90);
-            }
-            else
-            {
-                transform.Rotate(Vector3.up, 90);
-            }
+            movementSpeed = 3;
         }
-
     }
+
+    public void SpeedBoost()
+    {
+        movementSpeed = 5;
+        speedBoostStamp = Time.time;
+    }
+
+
 
 
     //private void OnCollisionEnter(Collision collision)
