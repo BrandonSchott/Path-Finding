@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MouseControl : MonoBehaviour
@@ -8,16 +10,25 @@ public class MouseControl : MonoBehaviour
 
     RaycastHit wallHit;
 
-    [SerializeField]
-    float movementSpeed;
-    
-    float speedBoostStamp;
+    Color originalColor;
 
-    bool wallNotDetected;
+
+    Renderer ren;
+
+    [SerializeField]
+    Vector3 escapeRoute;
+
+    float movementSpeed;
+
+    float speedBoostStamp, disguisedStamp;
+
+    public bool wallNotDetected, disguised;
     // Start is called before the first frame update
     void Start()
     {
         movementSpeed = 3.0f;
+        ren = gameObject.GetComponentInChildren<Renderer>();
+        originalColor = ren.material.color;
     }
 
     // Update is called once per frame
@@ -49,8 +60,15 @@ public class MouseControl : MonoBehaviour
         {
             Collider[] detector = Physics.OverlapSphere(transform.position, 7);
 
+            
+            escapeRoute = Vector3.zero;
+
             foreach (Collider col in detector)
             {
+                if (col.transform.tag == "Disguise")
+                {
+                    transform.LookAt(col.transform.position);
+                }
                 if (col.transform.tag == "Cat")
                 {
                     wallNotDetected = true;
@@ -65,15 +83,12 @@ public class MouseControl : MonoBehaviour
                             wallNotDetected = true;
                         }
                     }
-                 
+
 
                     if (wallNotDetected)
                     {
-                        if(!Physics.Raycast(transform.position, col.transform.position - transform.position,2))
-                        {
-                            transform.LookAt(col.transform.position);
-                            transform.Rotate(new Vector3(0, 180, 0));
-                        }
+                        escapeRoute += (transform.position - col.transform.position);
+                        
                     }
                     if (Physics.Raycast(transform.position, transform.forward, out hit, 3))
                     {
@@ -98,8 +113,7 @@ public class MouseControl : MonoBehaviour
                     }
 
                 }
-
-                if(col.transform.tag == "Speed")
+                if (col.transform.tag == "Speed")
                 {
                     if (Physics.Linecast(transform.position, col.transform.position, out wallHit))
                     {
@@ -112,17 +126,35 @@ public class MouseControl : MonoBehaviour
                             wallNotDetected = true;
                         }
                     }
-                    if(wallNotDetected)
+                    if (wallNotDetected)
                     {
                         transform.LookAt(col.transform.position);
                     }
                 }
             }
+
+            if(escapeRoute != Vector3.zero)
+            {
+                if (!Physics.Raycast(transform.position, transform.position + escapeRoute, 3))
+                {
+                    transform.rotation = Quaternion.LookRotation(Vector3.RotateTowards(transform.forward, escapeRoute, 1, 0));
+                    Debug.Log($"forward = " + transform.forward + " Escape = " + escapeRoute);
+                }
+                
+            }
+            
+            
         }
 
-        if(movementSpeed > 3 && Time.time > speedBoostStamp + 10)
+        if (movementSpeed > 3 && Time.time > speedBoostStamp + 10)
         {
             movementSpeed = 3;
+        }
+
+        if (disguised && Time.time > disguisedStamp + 10)
+        {
+            disguised = false;
+            ren.material.color = originalColor;
         }
 
     }
@@ -134,10 +166,17 @@ public class MouseControl : MonoBehaviour
             this.gameObject.SetActive(false);
         }
     }
-    
+
     public void SpeedBoost()
     {
         movementSpeed = 5;
         speedBoostStamp = Time.time;
+    }
+
+    public void Disguise()
+    {
+        disguised = true;
+        disguisedStamp = Time.time;
+        ren.material.color = Color.blue;
     }
 }

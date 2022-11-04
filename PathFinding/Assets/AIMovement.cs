@@ -31,7 +31,7 @@ public class AIMovement : MonoBehaviour
             {
                 if (Physics.Raycast(transform.position, transform.forward, out hit, 5.0f))
                 {
-                    float angle = Vector3.SignedAngle(transform.forward, -hit.normal, Vector3.forward);
+                    float angle = Vector3.SignedAngle(transform.forward, -hit.normal, Vector3.up);
 
                     transform.Rotate(0, angle, 0);
                 }
@@ -61,18 +61,22 @@ public class AIMovement : MonoBehaviour
         {
             if (col.transform.tag == "Mouse")
             {
-                wallNotDetected = true;
-                if (Physics.Linecast(transform.position, col.transform.position, out wallHit))
+                MouseControl mouseCon = col.GetComponent<MouseControl>();
+                if (!mouseCon.disguised)
                 {
-                    if (wallHit.transform.tag == "Wall")
+                    wallNotDetected = true;
+                    if (Physics.Linecast(transform.position, col.transform.position, out wallHit))
                     {
-                        wallNotDetected = false;
+                        if (wallHit.transform.tag == "Wall")
+                        {
+                            wallNotDetected = false;
+                        }
                     }
-                }
 
-                if (wallNotDetected)
-                {
-                    transform.LookAt(col.transform.position);
+                    if (wallNotDetected)
+                    {
+                        transform.LookAt(col.transform.position);
+                    }
                 }
 
             }
